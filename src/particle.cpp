@@ -33,7 +33,7 @@ void Particle::update(){
         fallOffDelay-= ofGetLastFrameTime();
         if(fallOffDelay <=0 ){
             isFallOff = true;
-            fallOffForce.set(-0.01,-0.01);
+            fallOffForce.set(-0.005,-0.01);
         }
     }
     

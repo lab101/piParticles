@@ -22,6 +22,7 @@ public:
     ofVec2f fallOffForce;
 
     ofFloatColor* color;
+    
     float delay;
     float waitTime;
     float fallOffDelay;

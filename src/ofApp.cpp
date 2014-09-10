@@ -7,11 +7,22 @@ const float complexity = .8; // wind complexity
 const float timeSpeed = .004; // wind variation speed
 const float phase = TWO_PI; // separate u-noise from v-noise
 
-
-const float gridSize = 2.3;
-const float dotSize  = 2.0;
 const float removeAllTime = 40;
-const float fallOffTime = 0.1;
+
+// small amount of particles
+//const float gridSize = 10.3;
+//const float dotSize  = 7.0;
+//const int takeFalloff = 4;
+//const float fallOffTime = 2.1;
+
+// a lot of particles
+const float gridSize = 2.8;
+const float dotSize  = 1.6;
+const int takeFalloff = 40;
+const float fallOffTime = .4;
+
+
+
 
 ofVec2f ofApp::getField(ofVec2f* position) {
     
@@ -32,8 +43,6 @@ void ofApp::startParticles(){
        
    {
        Particle* p = (*it);
-       
-//       p->offset = getField(p->position);
        p->position->set(p->targetPosition + ofVec2f(ofGetWidth(),ofGetHeight()) );
        p->waitTime = p->delay;
        p->isMoving = true;
@@ -52,11 +61,10 @@ void ofApp::setup(){
     ofSetFrameRate(60);
     //ofHideCursor();
     ofDisableAlphaBlending();
-   // ofDisableAntiAliasing();
+   // ofDisableAntiAliasing(); //<-- only when speed is really dramatic
 
     
     txtData.loadImage("text3.png");
-    // ofSetWindowShape(txtData.getWidth(), txtData.getHeight());
 
     unsigned char * pixels = txtData.getPixels();
 
@@ -86,19 +94,13 @@ void ofApp::setup(){
                 particle = new Particle();
                 particles.push_back(particle);
                 
-                ofFloatColor color;
-                color.set(0, 0, 22);
-//                ofVec2f vertex;
-//                vertex.set(100,100);
-                
-                vboColors.push_back(color);
+                vboColors.push_back(ofFloatColor());
                 vboPoints.push_back(ofVec2f());
                 
                 particle->color = &(vboColors.back());
                 particle->position = &(vboPoints.back());
                 
                 particle->targetPosition.set(x,y) ;
-              //  particle->targetPosition+=ofVec2f(-50,0);
                 
                 particle->color->set(x / txtData.getWidth() * 1.0, 0, y / txtData.getHeight() * 1.0);
                 particle->delay = ofRandom(0.0,3.5);
@@ -123,7 +125,7 @@ void ofApp::update(){
     {
         Particle* p = (*it);
         
-        if (p->position->x < 0 || p->position->y < 0) {
+        if (p->position->x < -dotSize || p->position->y < -dotSize) {
             continue;
         }
 
@@ -164,7 +166,7 @@ void ofApp::update(){
         if(fallOffTriger > 0 && (ofGetElapsedTimef() - fallOffTriger) > fallOffTime){
             fallOffTriger = ofGetElapsedTimef();
             
-            int take =  std::min((int)particles.size(),100);
+            int take =  std::min((int)particles.size(),takeFalloff);
             int randomIndex = ofRandom(particles.size()-take-1);
             
             for(int i = randomIndex ; i < randomIndex + take;++i){
