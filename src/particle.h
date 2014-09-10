@@ -29,11 +29,11 @@ public:
     bool isMoving;
     bool isFallOff;
     
-    string data;
     
     void startFallOff(float delay);
     void update();
     void draw();
+    void reset();
     
     Particle();
 };

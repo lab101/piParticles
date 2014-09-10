@@ -12,10 +12,12 @@ float const drawSize = 4;
 
 Particle::Particle(){
     isMoving = false;
-    isFallOff = false;
+}
+
+void Particle::reset(){
     fallOffForce.set(0,0);
     fallOffDelay =0;
-    data = "test";
+    isFallOff = false;
 }
 
 void Particle::update(){
@@ -35,7 +37,7 @@ void Particle::update(){
         }
     }
     
-    ofVec2f speed = ofVec2f(0.01, 0.01) +  (offset * 0.05);
+    ofVec2f speed = ofVec2f(0.01, 0.01) +  (offset * 0.09);
 
     
     if(isFallOff && fallOffForce.length() < 150) fallOffForce *= 1.5;

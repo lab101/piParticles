@@ -1,5 +1,5 @@
 #include "ofApp.h"
-
+#include <algorithm>
 
 float t;
 
@@ -8,8 +8,10 @@ const float timeSpeed = .004; // wind variation speed
 const float phase = TWO_PI; // separate u-noise from v-noise
 
 
-const int gridSize  = 5;
-const int dotSize  = 4;
+const float gridSize = 2.3;
+const float dotSize  = 2.0;
+const float removeAllTime = 40;
+const float fallOffTime = 0.1;
 
 ofVec2f ofApp::getField(ofVec2f* position) {
     
@@ -31,12 +33,11 @@ void ofApp::startParticles(){
    {
        Particle* p = (*it);
        
-       p->offset = getField(p->position);
+//       p->offset = getField(p->position);
        p->position->set(p->targetPosition + ofVec2f(ofGetWidth(),ofGetHeight()) );
        p->waitTime = p->delay;
        p->isMoving = true;
-       p->isFallOff = false;
-
+       p->reset();
     }
   
 }
@@ -45,16 +46,18 @@ void ofApp::startParticles(){
 void ofApp::setup(){
 
     // Rasp Pi window size
-//    ofSetWindowShape(720, 480);
+   // ofSetWindowShape(720, 480);
     
     ofSetFullscreen(true);
     ofSetFrameRate(60);
-    ofHideCursor();
+    //ofHideCursor();
     ofDisableAlphaBlending();
    // ofDisableAntiAliasing();
 
     
-    txtData.loadImage("text.png");
+    txtData.loadImage("text3.png");
+    // ofSetWindowShape(txtData.getWidth(), txtData.getHeight());
+
     unsigned char * pixels = txtData.getPixels();
 
     Particle* particle;
@@ -85,11 +88,11 @@ void ofApp::setup(){
                 
                 ofFloatColor color;
                 color.set(0, 0, 22);
-                ofVec2f vertex;
-                vertex.set(100,100);
+//                ofVec2f vertex;
+//                vertex.set(100,100);
                 
                 vboColors.push_back(color);
-                vboPoints.push_back(vertex);
+                vboPoints.push_back(ofVec2f());
                 
                 particle->color = &(vboColors.back());
                 particle->position = &(vboPoints.back());
@@ -114,21 +117,33 @@ void ofApp::setup(){
 //--------------------------------------------------------------
 void ofApp::update(){
    /// return;
-    
+    int skipSome=0;
+
     for(std::vector<Particle*>::iterator it = particles.begin();it != particles.end();++it )
     {
-        
-        // mouse stuff
-//        ofVec2f dist = (it->position) - ofVec2f(ofGetMouseX(),ofGetMouseY());
-//
-//        if(dist.length() < 150){
-//            
-//            float force = (150-dist.length()) / 150;
-//            it->pushForce += (dist * force *0.01) ;
-//            
-//        }
-
         Particle* p = (*it);
+        
+        if (p->position->x < 0 || p->position->y < 0) {
+            continue;
+        }
+
+        // mouse stuff
+        ofVec2f dist = *(p->position) - ofVec2f(ofGetMouseX(),ofGetMouseY());
+
+        if(dist.length() < 150){
+            
+            float force = (150-dist.length()) / 150;
+            p->pushForce += (dist * force *0.01) ;
+            
+            if(ofGetMousePressed()){
+                if(++skipSome >= 20){
+                    skipSome =0;
+                    p->startFallOff(dist.length()/150.0 * 2.0);
+                }
+            }
+            
+        }
+
         p->offset = getField(p->position);
         p->update();
     }
@@ -138,7 +153,7 @@ void ofApp::update(){
         newMessage -= ofGetLastFrameTime();
         if(newMessage <= 0){
             currentState = STATE_NEW_MESSAGE;
-            removeAllTriger = 10;
+            removeAllTriger = removeAllTime;
             startParticles();
             fallOffTriger = ofGetElapsedTimef();
             std::cout << "new state STATE_NEW_MESSAGE " << std::endl;
@@ -146,11 +161,13 @@ void ofApp::update(){
     }else if(currentState == STATE_NEW_MESSAGE){
         removeAllTriger -= ofGetLastFrameTime();
         
-        if(fallOffTriger > 0 && (ofGetElapsedTimef() - fallOffTriger) > 0.2){
+        if(fallOffTriger > 0 && (ofGetElapsedTimef() - fallOffTriger) > fallOffTime){
             fallOffTriger = ofGetElapsedTimef();
-            int randomIndex = ofRandom(particles.size()-11);
             
-            for(int i = randomIndex ; i < randomIndex + 10;++i){
+            int take =  std::min((int)particles.size(),100);
+            int randomIndex = ofRandom(particles.size()-take-1);
+            
+            for(int i = randomIndex ; i < randomIndex + take;++i){
                 particles[i]->startFallOff(ofRandom(.8));
             }
         }
@@ -217,7 +234,7 @@ void ofApp::mouseDragged(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
-    startParticles();
+    //startParticles();
 }
 
 //--------------------------------------------------------------
