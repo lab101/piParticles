@@ -10,16 +10,16 @@ const float phase = TWO_PI; // separate u-noise from v-noise
 const float removeAllTime = 40;
 
 // small amount of particles
-//const float gridSize = 10.3;
-//const float dotSize  = 7.0;
-//const int takeFalloff = 4;
-//const float fallOffTime = 2.1;
+const float gridSize = 10.3;
+const float dotSize  = 9.0;
+const int takeFalloff = 4;
+const float fallOffTime = 2.1;
 
 // a lot of particles
-const float gridSize = 2.8;
-const float dotSize  = 1.6;
-const int takeFalloff = 40;
-const float fallOffTime = .4;
+//const float gridSize = 2.8;
+//const float dotSize  = 1.6;
+//const int takeFalloff = 40;
+//const float fallOffTime = .4;
 
 
 
@@ -57,7 +57,10 @@ void ofApp::setup(){
     // Rasp Pi window size
    // ofSetWindowShape(720, 480);
     
-    ofSetFullscreen(true);
+    ofSetWindowPosition(1600, 0);
+    ofSetWindowShape(1920, 1080);
+//    ofSetFullscreen(true);
+
     ofSetFrameRate(60);
     //ofHideCursor();
     ofDisableAlphaBlending();
@@ -114,12 +117,32 @@ void ofApp::setup(){
     startParticles();
     
     currentState = STATE_BLANK;
+    
+    tuioClient.start(3333);
+    
+//    ofAddListener(tuioClient.cursorAdded,this,&ofApp::tuioAdded);
+//	ofAddListener(tuioClient.cursorRemoved,this,&ofApp::tuioRemoved);
+//	ofAddListener(tuioClient.cursorUpdated,this,&ofApp::tuioUpdated);
+
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
    /// return;
+    
+    tuioClient.getMessage();
+  //  std::cout <<   tuioClient.getTuioObjects().size();
+
     int skipSome=0;
+    
+    std::vector<ofVec2f> screenPositions;
+    for(ofxTuioCursor* c : tuioClient.getTuioCursors()){
+        ofxTuioPoint touchPoint = c->getPosition();
+        ofVec2f screenPosition =   ofVec2f(touchPoint.getX() * ofGetScreenWidth(),touchPoint.getY() * ofGetScreenHeight());
+
+        screenPositions.push_back(screenPosition);
+    }
+
 
     for(std::vector<Particle*>::iterator it = particles.begin();it != particles.end();++it )
     {
@@ -130,20 +153,25 @@ void ofApp::update(){
         }
 
         // mouse stuff
-        ofVec2f dist = *(p->position) - ofVec2f(ofGetMouseX(),ofGetMouseY());
+        
+        for(ofVec2f& screenPosition : screenPositions){
+      
+            ofVec2f dist = *(p->position) - screenPosition;
 
-        if(dist.length() < 150){
-            
-            float force = (150-dist.length()) / 150;
-            p->pushForce += (dist * force *0.01) ;
-            
-            if(ofGetMousePressed()){
-                if(++skipSome >= 20){
-                    skipSome =0;
-                    p->startFallOff(dist.length()/150.0 * 2.0);
-                }
+            const float length = dist.length();
+            if(length < 150){
+                
+                float force = (150-length) / 150;
+                p->pushForce += (dist * force * 0.01) ;
+                
+//                if(ofGetMousePressed()){
+//                    if(++skipSome >= 20){
+//                        skipSome =0;
+//                        p->startFallOff(dist.length()/150.0 * 2.0);
+//                    }
+//                }
+                
             }
-            
         }
 
         p->offset = getField(p->position);
@@ -214,9 +242,11 @@ void ofApp::draw(){
     
 }
 
+
+
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-
+    ofSetFullscreen(TRUE);
 }
 
 //--------------------------------------------------------------

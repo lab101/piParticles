@@ -2,6 +2,7 @@
 
 #include "ofMain.h"
 #include "particle.h"
+#include "ofxTuio.h"
 
 
 enum PlayState {STATE_BLANK, STATE_NEW_MESSAGE,STATE_WAIT,STATE_REMOVE_ALL};
@@ -41,5 +42,8 @@ class ofApp : public ofBaseApp{
     float removeAllTriger;
     
     ofVbo vbo;
+    
+    ofxTuioClient   tuioClient;
+
 
 };
